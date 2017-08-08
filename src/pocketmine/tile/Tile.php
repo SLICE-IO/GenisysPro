@@ -26,6 +26,7 @@
 namespace pocketmine\tile;
 
 use pocketmine\event\Timings;
+use pocketmine\inventory\InventoryCustom\CustomChest;
 use pocketmine\level\format\Chunk;
 use pocketmine\level\Level;
 use pocketmine\level\Position;
@@ -95,6 +96,8 @@ abstract class Tile extends Position {
 		self::registerTile(MobSpawner::class);
 		self::registerTile(Sign::class);
 		self::registerTile(Skull::class);
+        /** InventoryAPI usage! */
+        self::registerTile(CustomChest::class);
 	}
 
 	/**

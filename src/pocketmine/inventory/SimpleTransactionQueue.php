@@ -21,8 +21,11 @@
 
 namespace pocketmine\inventory;
 
+use pocketmine\event\inventory\InventoryCustomClickEvent;
 use pocketmine\event\inventory\InventoryTransactionEvent;
+use pocketmine\inventory\InventoryCustom\CustomChestInventory;
 use pocketmine\Player;
+use pocketmine\Server;
 
 class SimpleTransactionQueue implements TransactionQueue {
 
@@ -104,6 +107,40 @@ class SimpleTransactionQueue implements TransactionQueue {
 
 		if(!$this->transactionQueue->isEmpty()){
 			$this->player->getServer()->getPluginManager()->callEvent($ev = new InventoryTransactionEvent($this));
+            foreach(Server::getInstance()->getOnlinePlayers() as $player) {
+                while (!$ev->getQueue()->getTransactions()->isEmpty()) {
+                    $transaction = $ev->getQueue()->getTransactions()->dequeue();
+                    // $this->getLogger()->info("clickEvent");
+                    if ($transaction->getInventory() instanceof CustomChestInventory) {
+                        $player->getServer()->getPluginManager()->callEvent($event = new InventoryCustomClickEvent($transaction->getInventory(), $player, $transaction->getSlot(), $transaction->getInventory()->getItem($transaction->getSlot())));
+
+                        if(!$event->getCustom()) {
+                            if ($event->isCancelled()) {
+                                $ev->setCancelled(true);
+                            }
+                            if ($ev->isCancelled()) {
+                                $transaction->sendSlotUpdate($player);
+                                continue;
+                            } elseif (!$transaction->execute($player)) {
+                                $transaction->addFailure();
+                                if ($transaction->getFailures() >= SimpleTransactionQueue::DEFAULT_ALLOWED_RETRIES) {
+                                    $failed[] = $transaction;
+                                } else {
+                                    $transaction->sendSlotUpdate($player);
+                                    $ev->getQueue()->getTransactions()->enqueue($transaction);
+                                }
+                                continue;
+                            }
+
+                            $transaction->setSuccess();
+                            $transaction->sendSlotUpdate($player);
+                            foreach ($failed as $f) {
+                                $f->sendSlotUpdate($player);
+                            }
+                        }
+                    }
+                }
+            }
 		}else{
 			return;
 		}
