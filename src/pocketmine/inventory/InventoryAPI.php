@@ -38,5 +38,10 @@ class InventoryAPI{
         return $inventory;
     }
 
+    public function getInventory(Inventory $inventory){
+        if($inventory instanceof CustomChestInventory) return $inventory;
+        return null;
+    }
+
 
 }
