@@ -111,9 +111,8 @@ class SimpleTransactionQueue implements TransactionQueue {
                 while (!$ev->getQueue()->getTransactions()->isEmpty()) {
                     $transaction = $ev->getQueue()->getTransactions()->dequeue();
                     // $this->getLogger()->info("clickEvent");
-                    if ($transaction->getInventory() instanceof CustomChestInventory) {
+                    if ($transaction->getInventory() instanceof CustomChestInventory || $transaction->getInventory() instanceof PlayerInventory) {
                         $player->getServer()->getPluginManager()->callEvent($event = new InventoryCustomClickEvent($transaction->getInventory(), $player, $transaction->getSlot(), $transaction->getInventory()->getItem($transaction->getSlot())));
-
                         if(!$event->getCustom()) {
                             if ($event->isCancelled()) {
                                 $ev->setCancelled(true);
